@@ -158,6 +158,24 @@ try
     var encrypted = sender.Seal(Wire.Sample(second.Serial, new("level", "42")));
     await Send(broker, second, encrypted); var q = await Reply();
     Check(q.Client == second.ClientId && q.Topic == second.Output && Encoding.UTF8.GetString(sender.Open(q.Data)) == "[{\"key\":\"position\",\"value\":\"42\"}]", "encrypted response routing");
+    var languageFile = Path.Combine(root, "language.txt");
+    var previousEvents = one.Events;
+    var packetBefore = Wire.Sample(first.Serial, new("ch1", "on"));
+    Language.Save(true, languageFile);
+    Check(one.Status == "Online" && one.CanSend, "live connection survives switch to English");
+    Check(previousEvents.Any(e => e.Kind == "Broker acknowledgement" && e.Message.Contains("ch1")), "existing events localized");
+    Check(Language.Direction == Avalonia.Media.FlowDirection.LeftToRight && Language.DisplayName(first) == "Room light", "English layout and demo alias");
+    Check(Language.DisplayName(first with { Name = "آشپزخانه" }) == "آشپزخانه", "device names preserved");
+    Check(packetBefore.SequenceEqual(Wire.Sample(first.Serial, new("ch1", "on"))), "language-independent wire format");
+    Check(Editors.Describe(first.Rules[0]).Contains("Fixed reply"), "English rule descriptions");
+    Language.Load(Path.Combine(root, "missing-language.txt"));
+    Check(!Language.English, "Persian default for existing installations");
+    Language.Load(languageFile);
+    Check(Language.English, "language preference restored");
+    Language.Save(false, languageFile);
+    Check(one.Status == "آنلاین" && previousEvents.Any(e => e.Kind == "تأیید بروکر") &&
+        Language.Direction == Avalonia.Media.FlowDirection.RightToLeft, "live switch back to Persian");
+    File.Delete(languageFile);
     await Send(broker, second, encrypted);
     await Send(broker, first, Wire.Sample(second.Serial, new("ch1", "on")));
     await Send(broker, first, Wire.Sample(first.Serial, new("ch1", "other")));

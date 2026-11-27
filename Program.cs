@@ -29,6 +29,7 @@ public sealed class App : Application
             try
             {
                 Directory.CreateDirectory(Profiles.Folder);
+                Language.Load(Language.SettingsFile);
                 lease = new FileStream(Path.Combine(Profiles.Folder, "session.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                 desktop.MainWindow = new Dashboard();
             }
@@ -37,10 +38,11 @@ public sealed class App : Application
                 desktop.MainWindow = new Window
                 {
                     Title = "AirNgin",
+                    FlowDirection = Language.Direction,
                     Width = 540,
                     Height = 180,
                     Content = Ui.Wrap(
-                    "باز کردن شبیه‌ساز ممکن نشد. اگر پنجرهٔ دیگری باز است از همان استفاده کنید.\n" + e.Message, 20)
+                    Strings.StartupError + e.Message, 20)
                 };
             }
             desktop.Exit += (_, _) => lease?.Dispose();

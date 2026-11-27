@@ -41,7 +41,7 @@ internal static class Ui
         Text = value,
         Watermark = hint,
         MinHeight = 35,
-        FlowDirection = latin ? FlowDirection.LeftToRight : FlowDirection.RightToLeft
+        FlowDirection = latin ? FlowDirection.LeftToRight : Language.Direction
     };
     public static string Val(TextBox box) => box.Text ?? "";
     public static StackPanel Field(string title, Control input)
@@ -76,7 +76,7 @@ internal static class Ui
         Height = height,
         MinWidth = Math.Min(420, width),
         MinHeight = Math.Min(height, 280),
-        FlowDirection = FlowDirection.RightToLeft,
+        FlowDirection = Language.Direction,
         WindowStartupLocation = WindowStartupLocation.CenterOwner,
         Background = Canvas
     };

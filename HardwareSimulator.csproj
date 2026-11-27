@@ -3,12 +3,13 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>AirNgin.HardwareSimulator</AssemblyName>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RuntimeIdentifiers>osx-arm64;osx-x64;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Checks" />
     <Compile Remove="tests/**/*.cs" />
     <PackageReference Include="Avalonia" Version="11.3.12" />
     <PackageReference Include="Avalonia.Native" Version="11.3.12" />

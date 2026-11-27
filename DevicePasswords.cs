@@ -47,7 +47,7 @@ public static class DevicePasswords
         finally { if (data != null) CryptographicOperations.ZeroMemory(data); }
     }
 
-    private static IOException Error(int code) => new($"دسترسی به مخزن رمزهای سیستم ممکن نشد (کد {code}). دسترسی شبیه‌ساز به مخزن رمزهای حساب خود را بررسی کنید.");
+    private static IOException Error(int code) => new(Strings.VaultError(code));
 
     private static class Mac
     {
@@ -150,7 +150,7 @@ public static class DevicePasswords
                 }
                 return;
             }
-            if (data.Length > 2560) throw new InvalidDataException("طول رمز از ظرفیت مخزن رمزهای ویندوز بیشتر است.");
+            if (data.Length > 2560) throw new InvalidDataException(Strings.PasswordTooLong);
             var pinned = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
             {

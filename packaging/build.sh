@@ -19,12 +19,12 @@ if [[ $rid == osx-* ]]; then
   cp "$project/packaging/Info.plist" "$bundle/Contents/Info.plist"
   codesign --force --deep --sign - "$bundle"
   codesign --verify --deep --strict "$bundle"
-  cp "$project/README.md" "$project/examples/tester-demo.json" "$archive/"
+  cp "$project/README.md" "$project/README.en.md" "$project/examples/tester-demo.json" "$archive/"
   ditto -c -k --sequesterRsrc "$archive" "$stage/package.zip"
   ditto -x -k "$stage/package.zip" "$stage/check"
   codesign --verify --deep --strict "$stage/check/AirNgin Hardware Simulator.app"
 else
-  cp "$project/README.md" "$project/examples/tester-demo.json" "$target/"
+  cp "$project/README.md" "$project/README.en.md" "$project/examples/tester-demo.json" "$target/"
   (cd "$target" && zip -q -r "$stage/package.zip" .)
 fi
 mv "$stage/package.zip" "$out/HardwareSimulator-$rid.zip"

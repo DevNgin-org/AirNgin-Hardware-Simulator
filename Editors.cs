@@ -7,25 +7,25 @@ namespace AirNgin.Simulator;
 
 internal static class Editors
 {
-    static readonly string[] Modes = ["بازگرداندن مقدار فرمان", "پاسخ ثابت", "خواندن آخرین وضعیت", "بدون پاسخ", "کاستوم (متن دلخواه)"];
+    static string[] Modes => [Strings.Echo, Strings.Fixed, Strings.Current, Strings.Silent, Strings.CustomReply];
     public static bool UsesAnalyzerFormat(Rule rule) => rule.CustomInput || rule.Mode == ReplyMode.Custom;
-    public static string Describe(Rule r) => $"{(r.CustomInput ? "ورودی کاستوم" : r.Key)}  ·  {(r.Match == null ? "هر مقدار" : (r.Match.Length == 0 ? "رشتهٔ خالی" : r.Match))}  →  {Modes[(int)r.Mode]}" +
+    public static string Describe(Rule r) => $"{(r.CustomInput ? Strings.CustomInput : r.Key)}  ·  {(r.Match == null ? Strings.Any : (r.Match.Length == 0 ? Strings.Empty : r.Match))}  →  {Modes[(int)r.Mode]}" +
         (r.Mode is ReplyMode.Fixed or ReplyMode.Current or ReplyMode.Custom ? "  " + r.Value : "") +
         (r.ReplyKey.Length > 0 ? "  [" + r.ReplyKey + "]" : "") + (r.DelayMs > 0 ? $"  ·  {r.DelayMs} ms" : "");
     static async Task<Rule?> RuleDialog(Window parent, Rule? current, bool analyzer)
     {
-        var w = Dialog(analyzer ? "قانون پاسخ Analyzer" : "قانون ارتباط مستقیم", 600, 690); var body = Stack(12); var err = Text("", 13, Brushes.Firebrick);
+        var w = Dialog(analyzer ? Strings.AnalyzerRule : Strings.DirectRule, 600, 690); var body = Stack(12); var err = Text("", 13, Brushes.Firebrick);
         var key = Box(current?.Key, "ch1"); var match = Box(current?.Match, "on");
-        var input = new CheckBox { Content = "ورودی کاستوم", IsChecked = current?.CustomInput ?? analyzer };
-        var keyField = Field("کلید عملیات", key);
-        var matchField = Field("اگر مقدار ورودی برابر بود با", match);
-        var customHint = Text("متن فرمان را عیناً بچسبانید. اگر در رویداد فرمان یک رشتهٔ HEX می‌بینید، همان رشته را با حفظ حروف و فاصله‌ها کپی کنید.", 13, Muted);
-        var any = new CheckBox { Content = "هر مقدار ورودی", IsChecked = current is { Match: null } };
+        var input = new CheckBox { Content = Strings.CustomInput, IsChecked = current?.CustomInput ?? analyzer };
+        var keyField = Field(Strings.OperationKey, key);
+        var matchField = Field(Strings.IfEqual, match);
+        var customHint = Text(Strings.PasteHelp, 13, Muted);
+        var any = new CheckBox { Content = Strings.AnyInput, IsChecked = current is { Match: null } };
         var mode = new ComboBox { ItemsSource = Modes, SelectedIndex = (int)(current?.Mode ?? (analyzer ? ReplyMode.Custom : ReplyMode.Echo)), HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch };
-        var value = Box(current?.Value); var dest = Box(current?.ReplyKey, "پیش‌فرض: همان کلید ورودی");
+        var value = Box(current?.Value); var dest = Box(current?.ReplyKey, Strings.SameKey);
         var delay = new NumericUpDown { Minimum = 0, Maximum = 60000, Increment = 100, Value = current?.DelayMs ?? 0, FormatString = "0" };
-        var valLabel = Field("مقدار پاسخ", value);
-        var destLabel = Field("کلید پاسخ", dest);
+        var valLabel = Field(Strings.ReplyValue, value);
+        var destLabel = Field(Strings.ReplyKey, dest);
         void Sync()
         {
             bool literal = input.IsChecked == true;
@@ -34,14 +34,14 @@ internal static class Editors
             match.AcceptsReturn = literal;
             match.MinHeight = literal ? 64 : 35;
             match.IsEnabled = literal || any.IsChecked != true;
-            ((TextBlock)matchField.Children[0]).Text = literal ? "متن دقیق ورودی" : "اگر مقدار ورودی برابر بود با";
-            dest.Watermark = literal ? "کلید خروجی" : "پیش‌فرض: همان کلید ورودی";
+            ((TextBlock)matchField.Children[0]).Text = literal ? Strings.ExactInput : Strings.IfEqual;
+            dest.Watermark = literal ? Strings.OutputKey : Strings.SameKey;
             bool custom = mode.SelectedIndex == (int)ReplyMode.Custom;
             valLabel.IsVisible = mode.SelectedIndex is 1 or 2 || custom;
             value.AcceptsReturn = custom;
             value.MinHeight = custom ? 76 : 35;
             destLabel.IsVisible = !custom && mode.SelectedIndex != (int)ReplyMode.Silent;
-            ((TextBlock)valLabel.Children[0]).Text = mode.SelectedIndex == 2 ? "مقدار اولیه، تا پیش از اولین تغییر" : custom ? "متن کامل پاسخ" : "مقدار پاسخ";
+            ((TextBlock)valLabel.Children[0]).Text = mode.SelectedIndex == 2 ? Strings.Initial : custom ? Strings.FullReply : Strings.ReplyValue;
             dest.IsEnabled = mode.SelectedIndex != 3;
         }
         input.IsCheckedChanged += (_, _) =>
@@ -50,26 +50,26 @@ internal static class Editors
             Sync();
         };
         any.IsCheckedChanged += (_, _) => Sync(); mode.SelectionChanged += (_, _) => Sync(); Sync();
-        var incoming = Section("فرمان دریافتی", analyzer
-            ? "فرمانی را وارد کنید که اسکریپت تولید فرمان برای این دستگاه می‌سازد. برای روشن و خاموش دو قانون جدا تعریف کنید."
-            : "کلید عملیات دستگاه را وارد کنید. برای چراغ می‌توانید کلید ch1 و مقدار on را انتخاب کنید.");
+        var incoming = Section(Strings.Incoming, analyzer
+            ? Strings.AnalyzerInputHelp
+            : Strings.DirectInputHelp);
         foreach (var c in new Control[]{input,keyField,any,matchField,customHint}) incoming.Children.Add(c);
-        var outgoing = Section("پاسخ دستگاه", analyzer
-            ? "متن کامل گزارش را مطابق ورودی Analyzer بنویسید. اگر دستگاه از CRC استفاده می‌کند، CRC فریم پاسخ را هم در متن بگذارید."
-            : "انتخاب کنید دستگاه پس از دریافت فرمان، چه وضعیتی به اپ گزارش کند.");
+        var outgoing = Section(Strings.DeviceReply, analyzer
+            ? Strings.AnalyzerReplyHelp
+            : Strings.DirectReplyHelp);
         var responseHelp = Text("", 13, Muted);
         void ExplainMode() => responseHelp.Text = mode.SelectedIndex switch
         {
-            0 => "برای دیمر یا کلید، همان مقدار دریافتی در پاسخ قرار می‌گیرد.",
-            1 => "برای هر فرمان منطبق، همین مقدار گزارش می‌شود.",
-            2 => "آخرین مقدار کلید پاسخ خوانده می‌شود. تا اولین تغییر، مقدار اولیه گزارش می‌شود.",
-            3 => "فرمان در رویدادها ثبت می‌شود و دستگاه ساکت می‌ماند.",
-            _ => "متن یا JSON دقیقاً همان‌طور که نوشته‌اید ارسال می‌شود. کلید پاسخ لازم نیست."
+            0 => Strings.EchoHelp,
+            1 => Strings.FixedHelp,
+            2 => Strings.CurrentHelp,
+            3 => Strings.SilentHelp,
+            _ => Strings.LiteralHelp
         };
         mode.SelectionChanged += (_, _) => ExplainMode(); ExplainMode();
-        foreach (var c in new Control[]{Field("نوع پاسخ",mode),responseHelp,valLabel,destLabel,Field("تأخیر پاسخ (میلی‌ثانیه)",delay)}) outgoing.Children.Add(c);
+        foreach (var c in new Control[]{Field(Strings.ReplyType,mode),responseHelp,valLabel,destLabel,Field(Strings.Delay,delay)}) outgoing.Children.Add(c);
         body.Children.Add(Card(incoming)); body.Children.Add(Card(outgoing)); body.Children.Add(err);
-        Form(w, body, Row(Button("ثبت قانون", () =>
+        Form(w, body, Row(Button(Strings.SaveRule, () =>
         {
             try
             {
@@ -78,15 +78,15 @@ internal static class Editors
                 Profiles.Validate([Device.Sample() with { Rules = [r] }]); w.Close(r);
             }
             catch (Exception e) { err.Text = e.Message; }
-        }, true), Button("انصراف", () => w.Close())));
+        }, true), Button(Strings.Cancel, () => w.Close())));
         return await w.ShowDialog<Rule?>(parent);
     }
 
     private static StackPanel PasswordField(TextBox input)
     {
-        var field = Field("رمز عبور MQTT", input);
-        var reveal = new CheckBox { Content = "نمایش رمز" };
-        var copy = new Button { Content = "کپی رمز", IsVisible = false };
+        var field = Field(Strings.Password, input);
+        var reveal = new CheckBox { Content = Strings.Reveal };
+        var copy = new Button { Content = Strings.Copy, IsVisible = false };
         var feedback = Text("", 12, Muted);
         reveal.IsCheckedChanged += (_, _) =>
         {
@@ -101,9 +101,9 @@ internal static class Editors
                 var clipboard = TopLevel.GetTopLevel(input)?.Clipboard;
                 if (clipboard == null) throw new InvalidOperationException();
                 await clipboard.SetTextAsync(Val(input));
-                feedback.Text = "کپی شد";
+                feedback.Text = Strings.Copied;
             }
-            catch { feedback.Text = "کپی رمز ممکن نشد."; }
+            catch { feedback.Text = Strings.CopyFailed; }
         };
         field.Children.Add(Row(reveal, copy, feedback));
         return field;
@@ -111,11 +111,11 @@ internal static class Editors
 
     public static async Task<(Device Profile, string Password)?> DeviceDialog(Window parent, Device source, IEnumerable<Device> others, string savedPassword, bool running, bool showRules = false)
     {
-        var w = Dialog("مشخصات دستگاه · " + source.Name, 700, 730); var p = Stack(12); var err = Text("", 13, Brushes.Firebrick);
-        if (running) p.Children.Add(Text("ذخیرهٔ تغییرات، اتصال همین دستگاه را متوقف می‌کند.", 13, Muted));
+        var w = Dialog(Strings.DetailsPrefix + Language.DisplayName(source), 700, 730); var p = Stack(12); var err = Text("", 13, Brushes.Firebrick);
+        if (running) p.Children.Add(Text(Strings.WillDisconnect, 13, Muted));
         var name = Box(source.Name, latin: false); var serial = Box(source.Serial, "lamp-1"); var project = Box(source.Project);
         var host = Box(source.Host); var port = new NumericUpDown { Minimum = 1, Maximum = 65535, Value = source.Port, FormatString = "0" };
-        var client = Box(source.ClientId, "Client ID دریافتی از پروژه"); var user = Box(source.Username);
+        var client = Box(source.ClientId, Strings.ClientHint); var user = Box(source.Username);
         var password = Box(savedPassword);
         password.PasswordChar = '●';
         // An existing password belongs to the original broker and identity.
@@ -137,7 +137,7 @@ internal static class Editors
                     Val(project) != source.Project || Val(serial) != source.Serial) ClearInheritedPassword();
             };
         port.ValueChanged += (_, _) => { if (port.Value != source.Port) ClearInheritedPassword(); };
-        var aes = new CheckBox { Content = "رمزنگاری لایهٔ کاربرد AES-256-GCM", IsChecked = source.Aes };
+        var aes = new CheckBox { Content = Strings.Encryption, IsChecked = source.Aes };
         var rules = source.Rules.ToList();
         var list = new ListBox { Height = 128 };
         void Refresh(int i) { list.ItemsSource = rules.Select(Describe).ToArray(); if (i >= 0 && i < rules.Count) list.SelectedIndex = i; }
@@ -146,30 +146,32 @@ internal static class Editors
         {
             var i = list.SelectedIndex; if (!add && i < 0) return;
             var result = await RuleDialog(w, add ? null : rules[i], add ? analyzer : UsesAnalyzerFormat(rules[i])); if (result == null) return;
-            if (rules.Where((_, n) => add || n != i).Any(r => r.Key == result.Key && r.Match == result.Match)) { err.Text = "قانونی با همین کلید و شرط وجود دارد."; return; }
+            if (rules.Where((_, n) => add || n != i).Any(r => r.Key == result.Key && r.Match == result.Match)) { err.Text = Strings.DuplicateRule; return; }
             if (add) { rules.Add(result); i = rules.Count - 1; } else rules[i] = result;
             err.Text = ""; Refresh(i);
         }
-        var deviceFields = Section("مشخصات دستگاه", "نام نمایشی برای پیدا کردن دستگاه در شبیه‌ساز است. برای دریافت فرمان اپ، کد پروژه و سریال ثبت‌شده در پنل را وارد کنید.");
-        deviceFields.Children.Add(Field("نام نمایشی",name));
-        deviceFields.Children.Add(Columns(Field("سریال دستگاه",serial),Field("کد پروژه",project)));
-        var network = Section("اتصال به MQTT", "میزبان، شناسهٔ اتصال و حساب MQTT همین دستگاه را از پنل بردارید. برای آزمایش محلی نیازی به اتصال ندارید.");
-        foreach (var c in new Control[]{Columns(Field("میزبان MQTT",host),Field("پورت TLS",port)),Columns(Field("شناسهٔ اتصال (Client ID)",client),Field("نام کاربری MQTT",user)),
-            PasswordField(password),Text("رمز روی همین رایانه ذخیره می‌شود. برای پاک کردن آن، فیلد را خالی و دستگاه را ذخیره کنید.",13,Muted),
-            aes,Text("AES را برای دستگاهی فعال کنید که در پنل با رمزنگاری لایهٔ کاربرد ثبت شده است.",13,Muted)}) network.Children.Add(c);
+        var deviceFields = Section(Strings.Settings, Strings.SettingsHelp);
+        deviceFields.Children.Add(Field(Strings.DisplayName,name));
+        deviceFields.Children.Add(Columns(Field(Strings.Serial,serial),Field(Strings.Project,project)));
+        var network = Section(Strings.MqttHeading, Strings.MqttHelp);
+        network.Children.Add(Text(Strings.RegisterAgain, 13, Muted));
+        network.Children.Add(new HyperlinkButton { Content = Strings.OpenConsole, NavigateUri = new Uri("https://console.airngin.com/") });
+        foreach (var c in new Control[]{Columns(Field(Strings.Host,host),Field(Strings.Port,port)),Columns(Field(Strings.ClientId,client),Field(Strings.Username,user)),
+            PasswordField(password),Text(Strings.PasswordHelp,13,Muted),
+            aes,Text(Strings.AesHelp,13,Muted)}) network.Children.Add(c);
         var settings = Stack(12); settings.Children.Add(Card(deviceFields)); settings.Children.Add(Card(network));
-        var responses = Section("فرمان‌ها و پاسخ‌های دستگاه", "در ارتباط مستقیم، کلید و مقدار عملیات را تعریف کنید. برای Analyzer، متن فرمان و گزارش مورد انتظار اسکریپت را وارد کنید. هر دستگاه می‌تواند هر دو نوع قانون را داشته باشد.");
-        responses.Children.Add(Row(Button("قانون مستقیم جدید",async()=>await Edit(true)),Button("قانون Analyzer جدید",async()=>await Edit(true,true))));
+        var responses = Section(Strings.Commands, Strings.RulesHelp);
+        responses.Children.Add(Row(Button(Strings.AddDirect,async()=>await Edit(true)),Button(Strings.AddAnalyzer,async()=>await Edit(true,true))));
         responses.Children.Add(list);
-        responses.Children.Add(Row(Button("ویرایش قانون انتخابی",async()=>await Edit(false)),
-            Button("حذف قانون انتخابی",()=>{var i=list.SelectedIndex;if(i>=0){rules.RemoveAt(i);Refresh(Math.Min(i,rules.Count-1));}})));
-        responses.Children.Add(Text("پس از ثبت قانون، «ذخیرهٔ دستگاه» را بزنید تا تغییرات برای دفعهٔ بعد هم بماند.",13,Muted));
+        responses.Children.Add(Row(Button(Strings.EditRule,async()=>await Edit(false)),
+            Button(Strings.RemoveRule,()=>{var i=list.SelectedIndex;if(i>=0){rules.RemoveAt(i);Refresh(Math.Min(i,rules.Count-1));}})));
+        responses.Children.Add(Text(Strings.SaveHint,13,Muted));
         var tabs = new TabControl { ItemsSource = new TabItem[] {
-            new() { Header = "مشخصات و اتصال", Content = settings },
-            new() { Header = "قوانین پاسخ", Content = Card(responses) }
+            new() { Header = Strings.SettingsTab, Content = settings },
+            new() { Header = Strings.RulesTab, Content = Card(responses) }
         }, SelectedIndex = showRules ? 1 : 0 };
         p.Children.Add(tabs); p.Children.Add(err);
-        Form(w, p, Row(Button("ذخیرهٔ دستگاه", () =>
+        Form(w, p, Row(Button(Strings.SaveDevice, () =>
         {
             try
             {
@@ -178,32 +180,32 @@ internal static class Editors
                 Profiles.Validate(others.Append(result)); w.Close((result, Val(password)));
             }
             catch (Exception e) { err.Text = e.Message; }
-        }, true), Button("انصراف", () => w.Close())));
+        }, true), Button(Strings.Cancel, () => w.Close())));
         return await w.ShowDialog<(Device, string)?>(parent);
     }
 
     public static async Task<(string Password, string Key, string CaFile)?> Credentials(Window parent, Device d, string savedPassword)
     {
-        var w = Dialog("اتصال " + d.Name, 490, d.Aes ? 480 : 390); var p = Stack(12);
+        var w = Dialog(Strings.ConnectPrefix + Language.DisplayName(d), 490, d.Aes ? 480 : 390); var p = Stack(12);
         var pwd = Box(savedPassword); pwd.PasswordChar = '●'; var key = Box(); key.PasswordChar = '●';
         p.Children.Add(Text(d.Host + ":" + d.Port + "   ·   " + d.Serial, 15, null, true));
         p.Children.Add(PasswordField(pwd));
-        if (d.Aes) p.Children.Add(Field("کلید Base64 دستگاه", key));
+        if (d.Aes) p.Children.Add(Field(Strings.AesKey, key));
         string caFile = "";
-        var ca = Text("اعتماد به گواهی‌های سیستم", 12, Muted);
-        p.Children.Add(Row(Button("انتخاب CA خصوصی (اختیاری)", async () =>
+        var ca = Text(Strings.SystemTrust, 12, Muted);
+        p.Children.Add(Row(Button(Strings.ChooseCa, async () =>
         {
-            var files = await w.StorageProvider.OpenFilePickerAsync(new() { Title = "انتخاب گواهی CA با قالب PEM" });
+            var files = await w.StorageProvider.OpenFilePickerAsync(new() { Title = Strings.PickPem });
             if (files.Count == 1 && files[0].TryGetLocalPath() is string path) { caFile = path; ca.Text = Path.GetFileName(path); }
         }), ca));
-        Form(w, p, Row(Button("اتصال به بروکر", () => w.Close((Val(pwd), Val(key), caFile)), true), Button("انصراف", () => w.Close())));
+        Form(w, p, Row(Button(Strings.ConnectBroker, () => w.Close((Val(pwd), Val(key), caFile)), true), Button(Strings.Cancel, () => w.Close())));
         return await w.ShowDialog<(string, string, string)?>(parent);
     }
 
     public static async Task<bool> Confirm(Window parent, string message)
     {
-        var w = Dialog("حذف دستگاه", 420, 185); var p = Stack(); p.Children.Add(Text(message));
-        Form(w, p, Row(Button("حذف", () => w.Close(true)), Button("انصراف", () => w.Close(false))));
+        var w = Dialog(Strings.RemoveDevice, 420, 185); var p = Stack(); p.Children.Add(Text(message));
+        Form(w, p, Row(Button(Strings.Delete, () => w.Close(true)), Button(Strings.Cancel, () => w.Close(false))));
         return await w.ShowDialog<bool>(parent);
     }
 }
