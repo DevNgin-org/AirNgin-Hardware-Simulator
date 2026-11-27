@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../HardwareSimulator.csproj" /></ItemGroup>
+  <ItemGroup>
+    <None Include="../examples/tester-demo.json" Link="tester-demo.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

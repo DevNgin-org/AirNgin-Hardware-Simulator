@@ -1,0 +1,110 @@
+{
+  "format": 1,
+  "devices": [
+    {
+      "id": "00000000-0000-4600-8000-000000000001",
+      "name": "چراغ اتاق",
+      "serial": "DEMO0000000001",
+      "project": "DEMO",
+      "host": "mqtt.airngin.com",
+      "port": 8883,
+      "clientId": "",
+      "username": "",
+      "aes": false,
+      "rules": [
+        {
+          "key": "ch1",
+          "match": "on",
+          "mode": "Fixed",
+          "value": "on",
+          "replyKey": "",
+          "delayMs": 0
+        },
+        {
+          "key": "ch1",
+          "match": "off",
+          "mode": "Fixed",
+          "value": "off",
+          "replyKey": "",
+          "delayMs": 0
+        },
+        {
+          "key": "ch1",
+          "match": "get",
+          "mode": "Current",
+          "value": "off",
+          "replyKey": "",
+          "delayMs": 0
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-4600-8000-000000000002",
+      "name": "دیمر پذیرایی",
+      "serial": "DEMO0000000002",
+      "project": "DEMO",
+      "host": "mqtt.airngin.com",
+      "port": 8883,
+      "clientId": "",
+      "username": "",
+      "aes": false,
+      "rules": [
+        {
+          "key": "level",
+          "match": "get",
+          "mode": "Current",
+          "value": "0",
+          "replyKey": "brightness",
+          "delayMs": 0
+        },
+        {
+          "key": "level",
+          "match": "unavailable",
+          "mode": "Silent",
+          "value": "",
+          "replyKey": "",
+          "delayMs": 0
+        },
+        {
+          "key": "level",
+          "match": null,
+          "mode": "Echo",
+          "value": "",
+          "replyKey": "brightness",
+          "delayMs": 300
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-4600-8000-000000000003",
+      "name": "کلید آزمایشی Analyzer",
+      "serial": "DEMO0000000003",
+      "project": "DEMO",
+      "host": "mqtt.airngin.com",
+      "port": 8883,
+      "clientId": "",
+      "username": "",
+      "aes": false,
+      "rules": [
+        {
+          "key": "",
+          "match": "01E230303030303030303033010004000200FF6666",
+          "mode": "Custom",
+          "value": "{\"data\":\"01E230303030303030303033011104000200FF6527\"}",
+          "replyKey": "",
+          "delayMs": 0,
+          "customInput": true
+        },
+        {
+          "key": "",
+          "match": "01E230303030303030303033010004000200002626",
+          "mode": "Custom",
+          "value": "{\"data\":\"01E230303030303030303033011104000200002567\"}",
+          "replyKey": "",
+          "delayMs": 0,
+          "customInput": true
+        }
+      ]
+    }
+  ]
+}
